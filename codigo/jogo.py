@@ -1,7 +1,8 @@
-from codigo.funcoes import *
+from funcoes import *
 import pygame
-pygame.init()
+
 def jogo():
-    janela = inicializa()
-    return game_loop(janela)
-print(jogo())
+    janela, assets = inicializa()
+    game_loop(janela, assets)
+    pygame.quit()
+jogo()
