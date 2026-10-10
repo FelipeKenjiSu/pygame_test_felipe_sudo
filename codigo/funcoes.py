@@ -31,6 +31,9 @@ def desenha(window,assets):
     x = (800 -50)//2 
     y =(600- 40)//2   
     window.blit(assets['nave'],(x,y))
+    fonte=pygame.font.Font('assets/font/PressStart2P.ttf', 15)
+    coracoes = fonte.render(chr(9829) * 3, True, 'red') #fonte.render -->cria imagem a partir de um texto chr(9829) é os coraçoes , anti aliasing , cor
+    window.blit(coracoes, (10, 10))
     pygame.display.update()
 def game_loop(window,assets):
     game = True
@@ -39,4 +42,5 @@ def game_loop(window,assets):
         if game == False:
             break
         tela = desenha(window,assets)
+        
 
