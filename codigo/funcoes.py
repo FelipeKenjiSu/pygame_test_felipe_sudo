@@ -4,6 +4,9 @@ largura = 800
 altura = 600
 def inicializa():
     pygame.init()
+    pygame.mixer.music.load('assets/snd/tgfcoder-FrozenJam-SeamlessLoop.ogg')
+    pygame.mixer.music.set_volume(0.05)
+    pygame.mixer.music.play(loops = -1)
     assets = {}
     assets['fundo']= pygame.image.load('assets/img/starfield.png')
     assets['nave'] =pygame.image.load('assets/img/playerShip1_orange.png')
@@ -12,6 +15,8 @@ def inicializa():
     assets['nave']=pygame.transform.scale(assets['nave'], (50, 40))
     assets['meteoro'] =pygame.transform.scale(assets['meteoro'], (50, 50))
     janela = pygame.display.set_mode((largura,altura))
+    assets['som_tiro'] = pygame.mixer.Sound('assets/snd/pew.wav')
+    assets['som_tiro'].set_volume(0.15)
     assets['estrelas']= []
     assets['x'] =largura//2
     assets['y']= altura//2
@@ -27,7 +32,7 @@ def inicializa():
         assets['estrelas'].append([x, y, raio])
     assets['meteoros'] =[]
     for i in range(5):
-        dados_meteoro ={'x':random.randint(1, largura-51),'y':random.randint(1, altura -51),'vy':100}
+        dados_meteoro ={'x':random.randint(1, largura-51),'y':random.randint(1, altura//4),'vy':100}
         assets['meteoros'].append(dados_meteoro)
     pygame.display.set_caption('Jogo do Felipe')
     return janela,assets
@@ -45,6 +50,8 @@ def recebe_eventos(assets):
                 assets['vy'] = -200
             if event.key == pygame.K_DOWN:
                 assets['vy'] = 200
+            if event.key == pygame.K_SPACE:
+                assets['som_tiro'].play()
         if event.type == pygame.KEYUP:  # solta a tecla , ou seja antes voce tava pressionando agora ta soltando ela
             if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                 assets['vx'] = 0
