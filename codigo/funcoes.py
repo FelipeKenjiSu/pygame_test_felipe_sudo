@@ -28,8 +28,21 @@ class Meteoro(pygame.sprite.Sprite):
         self.rect.y=self.rect.y +self.vy*delta_t /1000
         if self.rect.y>altura:
             self.rect.y=-50
-            self.rect.x=random.randint(0,largura-50)
-
+            self.rect.x=random.randint(0,largura-51)
+class Tiro(pygame.sprite.Sprite):
+    def __init__(self, assets, nave):
+        pygame.sprite.Sprite.__init__(self)
+        self.image= assets['tiro']
+        self.rect=self.image.get_rect() # cria um retangulo do tamanho da imagem
+        self.rect.centerx=nave.rect.centerx # funcao que alinha o centro horizontado do tiro ao da nave, facilitador
+        self.rect.bottom= nave.rect.top # base do tiro no topo da nave , facilitador
+        self.y= float(self.rect.y) # float serve para nao bugar os pixels, por causa de numeros que dao quebrados
+        self.vy=-500
+    def atualiza_posicao(self, delta_t):
+        self.y+=self.vy*delta_t /1000
+        self.rect.y=int(self.y)
+        if self.rect.bottom<0:
+            self.kill()
 class TelaInicial:
     def __init__(self, window):
         self.window = window
@@ -70,7 +83,6 @@ class TelaGameOver:
         self.window.blit(mensagem2, (largura//4, altura//3+80))
         self.window.blit(sair, (largura//4,altura//3+120 ))
         pygame.display.update()
-
     def recebe_eventos(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -85,6 +97,7 @@ class TelaJogo:
     def __init__(self, window, assets):#cria as configs do zero para o proximo loop, no caso do jogador perder ou reiniciar ou qlq que seja o motivo, cria um novo jogo com os stats zerados.
         self.window = window
         self.assets = assets
+        self.assets['tiros'] = pygame.sprite.Group()
         self.assets['vidas'] = 3
         self.assets['nave_obj'] = Nave(assets)#configura imagem,retangulo,posição inicial e velocidades zeradas
         self.assets['nave_grupo'] = pygame.sprite.Group()
@@ -170,6 +183,8 @@ def recebe_eventos(assets):
                 assets['nave_obj'].vy = 350
             if event.key == pygame.K_SPACE:
                 assets['som_tiro'].play()
+                tiro = Tiro(assets, assets['nave_obj'])#cria um tiro a partir dos assets(informaçoes do tiro), e as informacoes da nave.
+                assets['tiros'].add(tiro)#adiciona ao grupo dos tiros
         if event.type == pygame.KEYUP:  # solta a tecla , ou seja antes voce tava pressionando agora ta soltando ela
             if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
                 assets['nave_obj'].vx = 0
@@ -188,9 +203,11 @@ def desenha(window,assets):
     window.blit(assets['nave_obj'].image, assets['nave_obj'].rect)#atualizei para x e y de assets para sincronizar
     fonte=pygame.font.Font('assets/font/PressStart2P.ttf',15)
     coracoes = fonte.render(chr(9829)*assets['vidas'],True,'red') #fonte.render -->cria imagem a partir de um texto chr(9829) é os coraçoes , anti aliasing , cor
+    assets['tiro'] = pygame.image.load('assets/img/laserRed16.png')
     window.blit(coracoes, (10,10))
     fps = fonte.render(str(int(assets['fps'])), True,'white')
     window.blit(fps, (largura-50,altura-30))
+    assets['tiros'].draw(window)
     pygame.display.update()
 def game_loop(window,assets):
     game =True
@@ -212,6 +229,13 @@ def game_loop(window,assets):
         # Se bater, tira uma vida e reposiciona o meteoro
         for dados_meteoro in assets['meteoros']:
             dados_meteoro.atualiza_posicao(delta_t)#atualiza o meteoro: faz ele descer e voltar para cima quando sai da tela, criei um método para isso.
+        for tiro in assets['tiros']:
+            tiro.atualiza_posicao(delta_t)
+        pygame.sprite.groupcollide(assets['tiros'], assets['meteoros'], True, True)#colisao tiros e meteoros,true,true remove os dois em caso de colisao
+        while len(assets['meteoros']) < 5:
+            meteoro = Meteoro(assets)
+            meteoro.rect.y = -50
+            assets['meteoros'].add(meteoro)
         colisoes = pygame.sprite.groupcollide(assets['nave_grupo'],assets['meteoros'],False,False)
             #verifica colisão entre o grupo da nave e o grupo dos meteoros
             #os False fazem com que nave e meteoros não sejam removidos automaticamente
