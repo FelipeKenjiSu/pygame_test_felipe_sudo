@@ -15,6 +15,14 @@ class Nave(pygame.sprite.Sprite):
     def atualiza_posicao(self, delta_t):
         self.rect.x= self.rect.x +self.vx*delta_t/ 1000
         self.rect.y=self.rect.y +self.vy*delta_t /1000
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right>largura:
+            self.rect.right=largura
+        if self.rect.top<0:
+            self.rect.top=0
+        if self.rect.bottom>altura:
+            self.rect.bottom=altura
 
 class Meteoro(pygame.sprite.Sprite):
     def __init__(self,assets):
@@ -29,6 +37,26 @@ class Meteoro(pygame.sprite.Sprite):
         if self.rect.y>altura:
             self.rect.y=-50
             self.rect.x=random.randint(0,largura-51)
+
+
+class Explosao(pygame.sprite.Sprite):
+    def __init__(self, assets, meteoro):
+        pygame.sprite.Sprite.__init__(self)
+        self.imagens= assets['explosao']
+        self.image=self.imagens[0]
+        self.rect=self.image.get_rect()
+        self.rect.center = meteoro.rect.center
+        self.frame=0 # qual imagem estou mostrando regularExplosion01.png até a 08
+        self.tempo= 0 #conta quanto tempo passou desde a ultima troca de imagem da explossao
+    def atualiza_posicao(self, delta_t):
+        self.tempo+=delta_t
+        if self.tempo>=50:#tempo minimo para mudar de animação
+            self.tempo-= 50
+            self.frame+=1 # muda a imagem
+            if self.frame>=len(self.imagens):
+                self.kill()#remove as imagens de explosão de todos  grupos , meteoros, nave e etc..
+            else:
+                self.image= self.imagens[self.frame]#troca a imagem 1 do loop passado pela 2 por exemplo.
 class Tiro(pygame.sprite.Sprite):
     def __init__(self, assets, nave):
         pygame.sprite.Sprite.__init__(self)
@@ -50,8 +78,8 @@ class TelaInicial:
     def desenha(self):
         self.window.fill((0, 0, 0))
         mensagem =self.fonte.render('Pressione qualquer tecla', True,'white')
-        mensagem2= self.fonte.render('para comecar', True,'white')
-        sair =self.fonte.render('Q para sair', True,'white')
+        mensagem2=self.fonte.render('para comecar', True,'white')
+        sair=self.fonte.render('Q para sair', True,'white')
         self.window.blit(mensagem,(largura//4,altura//3))
         self.window.blit(mensagem2,(largura//4,altura//3+40))
         self.window.blit(sair,(largura//4,altura//3+80))
@@ -87,7 +115,6 @@ class TelaGameOver:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return 'sair'
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_q:
                     return 'sair'
@@ -103,6 +130,7 @@ class TelaJogo:
         self.assets['nave_grupo'] = pygame.sprite.Group()
         self.assets['nave_grupo'].add(self.assets['nave_obj'])
         self.assets['meteoros'] = pygame.sprite.Group()
+        self.assets['explosoes'] = pygame.sprite.Group()
         for i in range(5):
             meteoro = Meteoro(assets)
             self.assets['meteoros'].add(meteoro)
@@ -134,12 +162,20 @@ class Jogo:
                 self.tela=TelaGameOver(self.window)
                 self.estado='gameover'
         pygame.quit()
+# class Explosão:
+#     def __init__(self):
+        
 def inicializa():
     pygame.init()
     pygame.mixer.music.load('assets/snd/tgfcoder-FrozenJam-SeamlessLoop.ogg')
     pygame.mixer.music.set_volume(0.05)
     pygame.mixer.music.play(loops = -1)
     assets = {}
+    assets['explosao'] = []
+    for i in range(9):
+        imagem =pygame.image.load(f'assets/img/regularExplosion0{i}.png')
+        imagem =pygame.transform.scale(imagem,(50, 50))
+        assets['explosao'].append(imagem)
     assets['fundo']= pygame.image.load('assets/img/starfield.png')
     assets['nave'] =pygame.image.load('assets/img/playerShip1_orange.png')
     assets['meteoro'] = pygame.image.load('assets/img/meteorBrown_med1.png')
@@ -152,6 +188,8 @@ def inicializa():
     janela = pygame.display.set_mode((largura,altura))
     assets['som_tiro'] = pygame.mixer.Sound('assets/snd/pew.wav')
     assets['som_tiro'].set_volume(0.15)
+    assets['som_explosao'] = pygame.mixer.Sound('assets/snd/expl3.wav')
+    assets['som_explosao'].set_volume(0.3)
     assets['estrelas']= []
     assets['vidas'] = 3
     assets['t0']=pygame.time.get_ticks()#conta o tempo a partir do pygame.init()
@@ -174,22 +212,26 @@ def recebe_eventos(assets):
             game = False
         if event.type == pygame.KEYDOWN: # se for uma tecla de  pressionar
             if event.key == pygame.K_RIGHT:
-                assets['nave_obj'].vx = 350
+                assets['nave_obj'].vx +=350
             if event.key == pygame.K_LEFT:
-                assets['nave_obj'].vx = -350
+                assets['nave_obj'].vx -= 350
             if event.key == pygame.K_UP:
-                assets['nave_obj'].vy = -350
+                assets['nave_obj'].vy-=350
             if event.key == pygame.K_DOWN:
-                assets['nave_obj'].vy = 350
+                assets['nave_obj'].vy+= 350
             if event.key == pygame.K_SPACE:
                 assets['som_tiro'].play()
                 tiro = Tiro(assets, assets['nave_obj'])#cria um tiro a partir dos assets(informaçoes do tiro), e as informacoes da nave.
                 assets['tiros'].add(tiro)#adiciona ao grupo dos tiros
-        if event.type == pygame.KEYUP:  # solta a tecla , ou seja antes voce tava pressionando agora ta soltando ela
-            if event.key == pygame.K_RIGHT or event.key == pygame.K_LEFT:
-                assets['nave_obj'].vx = 0
-            if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-                assets['nave_obj'].vy = 0
+        if event.type== pygame.KEYUP:  # solta a tecla , ou seja antes voce tava pressionando agora ta soltando ela
+            if event.key == pygame.K_RIGHT:
+                assets['nave_obj'].vx -= 350
+            if event.key == pygame.K_LEFT:
+                assets['nave_obj'].vx += 350
+            if event.key == pygame.K_UP:
+                assets['nave_obj'].vy += 350
+            if event.key == pygame.K_DOWN:
+                assets['nave_obj'].vy -= 350
     return game
 def desenha(window,assets):
     window.blit(assets['fundo'], (0, 0))
@@ -208,6 +250,7 @@ def desenha(window,assets):
     fps = fonte.render(str(int(assets['fps'])), True,'white')
     window.blit(fps, (largura-50,altura-30))
     assets['tiros'].draw(window)
+    assets['explosoes'].draw(window)
     pygame.display.update()
 def game_loop(window,assets):
     game =True
@@ -231,17 +274,30 @@ def game_loop(window,assets):
             dados_meteoro.atualiza_posicao(delta_t)#atualiza o meteoro: faz ele descer e voltar para cima quando sai da tela, criei um método para isso.
         for tiro in assets['tiros']:
             tiro.atualiza_posicao(delta_t)
-        pygame.sprite.groupcollide(assets['tiros'], assets['meteoros'], True, True)#colisao tiros e meteoros,true,true remove os dois em caso de colisao
+        for explosao in assets['explosoes']:#atualize a posicao tanto do tiro , quanto da imagem de explosao
+            explosao.atualiza_posicao(delta_t)#recebe delta_t
+        colisoes_tiros=pygame.sprite.groupcollide(assets['tiros'], assets['meteoros'], True, True)
+        for tiro in colisoes_tiros:#tiro da nave
+            for meteoro in colisoes_tiros[tiro]:#meteoros atingidos
+                explosao=Explosao(assets, meteoro)#cria a explosao para cada meteoro atingido
+                assets['explosoes'].add(explosao)
+                assets['som_explosao'].play()
+        #colisao tiros e meteoros,true,true remove os dois em caso de colisao
         while len(assets['meteoros']) < 5:
             meteoro = Meteoro(assets)
             meteoro.rect.y = -50
             assets['meteoros'].add(meteoro)
         colisoes = pygame.sprite.groupcollide(assets['nave_grupo'],assets['meteoros'],False,False)
+            #tiros que acertaram meteoros
+            # meteoros atingidos por cada tiro
             #verifica colisão entre o grupo da nave e o grupo dos meteoros
             #os False fazem com que nave e meteoros não sejam removidos automaticamente
         for nave in colisoes:
             for meteoro in colisoes[nave]:
                 assets['vidas']= assets['vidas']-1
+                explosao = Explosao(assets, meteoro)#cria o objeto da explosao
+                assets['explosoes'].add(explosao)#essencial para aparecer a explosao,basicamente desenha
+                assets['som_explosao'].play()
                 meteoro.rect.y=-50
                 meteoro.rect.x=random.randint(0,largura-51)
         if assets['vidas'] <=0:
