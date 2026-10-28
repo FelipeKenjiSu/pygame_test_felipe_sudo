@@ -80,8 +80,12 @@ variavel.coliiderect(outro_ret):
 ## JOGO.PY
 from funcoes import *
 import pygame
-jogo = Jogo()
-jogo.executar()
+
+def jogo():
+    janela, assets = inicializa()
+    game_loop(janela, assets)
+    pygame.quit()
+jogo()
 
 
 ## FUNCÃO INICIAL
