@@ -77,11 +77,23 @@ if ret_personagem.colliderect(ret_fruta):
    assets['pontos'] += 1
 
 variavel.coliiderect(outro_ret):
+## JOGO.PY
+from funcoes import *
+import pygame
+jogo = Jogo()
+jogo.executar()
+
 
 ## FUNCÃO INICIAL
 import pygame
+
+
 largura =
+
+
 altura =
+
+
 def inicializa():
     pygame.init()
     janela = pygame.display.set_mode((largura, altura))
