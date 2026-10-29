@@ -135,20 +135,20 @@ def game_loop(janela, assets):
 
 
     teclas = pygame.key.get_pressed()
-    x_antigo = assets['cords_personagem'][0]
-    y_antigo = assets['cords_personagem'][1]
+    x_antigo = assets['x']
+    y_antigo = assets['y']
     if teclas[pygame.K_UP]:
-        assets['cords_personagem'][1] -= 5
+        assets['y'] -= 5
     if teclas[pygame.K_DOWN]:
-        assets['cords_personagem'][1] += 5
+        assets['y'] += 5
     if teclas[pygame.K_LEFT]:
-        assets['cords_personagem'][0] -= 5
+        assets['x'] -= 5
     if teclas[pygame.K_RIGHT]:
-        assets['cords_personagem'][0] += 5
-    if assets['cords_personagem'][0]>largura-x_personagem or assets['cords_personagem'][0]<0 :
-        assets['cords_personagem'][0] = x_antigo
-    if assets['cords_personagem'][1]>altura-y_personagem or assets['cords_personagem'][1]<0 :
-        assets['cords_personagem'][1] = y_antigo
+        assets['x'] += 5
+    if assets['x']>largura-x_personagem or assets['x']<0 :
+        assets['x'] = x_antigo
+    if assets['y']>altura-y_personagem or assets['y']<0 :
+        assets['y'] = y_antigo
 
 
 
